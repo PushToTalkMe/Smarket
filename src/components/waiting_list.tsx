@@ -7,9 +7,13 @@ import {
 } from "@mui/x-data-grid";
 import { Box, Typography } from "@mui/material";
 
+interface IWaitingList {
+  tickers: never[];
+}
+
 function RenderDate(props: GridRenderCellParams<any>) {
   const { value } = props;
-  const newValue = value.split(" ");
+  const newValue = value.split("T");
 
   return (
     <p>
@@ -117,7 +121,7 @@ const rows = [
   },
 ];
 
-function WaitingList() {
+function WaitingList({ tickers }: IWaitingList) {
   return (
     <Box
       sx={{
@@ -132,7 +136,7 @@ function WaitingList() {
       }}
     >
       <DataGrid
-        rows={rows}
+        rows={tickers}
         columns={columns}
         autoHeight
         getCellClassName={(params: GridCellParams<any, any, string>) => {

@@ -5,38 +5,44 @@ import {
   OrderSide,
   ServerMessageType,
 } from "./enums";
-import Decimal from "decimal.js";
 import { ServerEnvelope } from "./models/server_messages";
 
-export default class WSConnector {
+export class WSConnector {
+  url: string;
   connection: WebSocket | undefined;
 
-  constructor() {
+  constructor(url: string) {
+    this.url = url;
     this.connection = undefined;
   }
 
   connect = () => {
-    this.connection = new WebSocket("ws://127.0.0.1:5173/ws/");
+    this.connection = new WebSocket(this.url);
+
+    this.connection.onopen = () => {
+      console.log("пользователь подключился");
+    };
+
     this.connection.onclose = () => {
       this.connection = undefined;
     };
 
     this.connection.onerror = () => {};
 
-    this.connection.onopen = () => {};
-
     this.connection.onmessage = (event) => {
       const message: ServerEnvelope = JSON.parse(event.data);
-      switch (message.messageType) {
-        case ServerMessageType.success:
-          break;
-        case ServerMessageType.error:
-          break;
-        case ServerMessageType.executionReport:
-          break;
-        case ServerMessageType.marketDataUpdate:
-          break;
-      }
+      console.log(message);
+
+      // switch (message.messageType) {
+      //   case ServerMessageType.success:
+      //     break;
+      //   case ServerMessageType.error:
+      //     break;
+      //   case ServerMessageType.executionReport:
+      //     break;
+      //   case ServerMessageType.marketDataUpdate:
+      //     break;
+      // }
     };
   };
 
@@ -69,8 +75,8 @@ export default class WSConnector {
   placeOrder = (
     instrument: Instrument,
     side: OrderSide,
-    amount: Decimal,
-    price: Decimal
+    amount: string,
+    price: string
   ) => {
     this.send({
       messageType: ClientMessageType.placeOrder,
