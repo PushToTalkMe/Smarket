@@ -1,5 +1,14 @@
 export class MockWebSocket {
-  constructor(url) {
+  url: string;
+  readyState: number;
+  listeners: {
+    open: never[];
+    message: never[];
+    error: never[];
+    close: never[];
+  };
+
+  constructor(url: string) {
     this.url = url;
     this.readyState = MockWebSocket.CONNECTING;
     this.listeners = {
@@ -15,11 +24,11 @@ export class MockWebSocket {
   static CLOSING = 2;
   static CLOSED = 3;
 
-  addEventListener(event, listener) {
+  addEventListener(event: keyof typeof this.listeners, listener: never) {
     this.listeners[event].push(listener);
   }
 
-  removeEventListener(event, listener) {
+  removeEventListener(event: keyof typeof this.listeners, listener: never) {
     const index = this.listeners[event].indexOf(listener);
     if (index > -1) {
       this.listeners[event].splice(index, 1);
@@ -28,17 +37,24 @@ export class MockWebSocket {
 
   simulateOpen() {
     this.readyState = MockWebSocket.OPEN;
-    this.listeners["open"].forEach((listener) => listener());
+    console.log("Websocket open");
+    this.listeners["open"].forEach((listener: () => void) => listener());
   }
 
-  simulateMessage(data) {
-    this.listeners["message"].forEach((listener) => listener({ data }));
+  simulateMessage(data: any) {
+    this.listeners["message"].forEach((listener: (arg0: any) => void) =>
+      listener({ data })
+    );
   }
 
-  simulateError(error) {
+  simulateError(error: any) {
     this.readyState = MockWebSocket.CLOSED;
-    this.listeners["error"].forEach((listener) => listener(error));
-    this.listeners["close"].forEach((listener) =>
+    console.log("Websocket error");
+
+    this.listeners["error"].forEach((listener: (arg0: any) => void) =>
+      listener(error)
+    );
+    this.listeners["close"].forEach((listener: (arg0: any) => void) =>
       listener({
         code: 1006,
         reason: "Instrument/amount not specified",
@@ -49,7 +65,7 @@ export class MockWebSocket {
 
   simulateClose() {
     this.readyState = MockWebSocket.CLOSED;
-    this.listeners["close"].forEach((listener) =>
+    this.listeners["close"].forEach((listener: (arg0: any) => void) =>
       listener({
         code: 1000,
         reason: "WebSocket closed normally",
@@ -58,9 +74,3 @@ export class MockWebSocket {
     );
   }
 }
-
-// To simulate events, you can call the corresponding methods on the mock WebSocket:
-// ws.simulateOpen();
-// ws.simulateMessage("Hello, world!");
-// ws.simulateError(new Error("Something went wrong"));
-// ws.simulateClose();

@@ -1,9 +1,9 @@
-import { MockWebSocket } from "../modules/mock_web_socket";
+import React from "react";
+import { MockWebSocket } from "../mock_web_socket";
 import { useEffect, useRef, useState } from "react";
 import {
   Dialog,
   DialogContent,
-  DialogActions,
   TextField,
   Button,
   Select,
@@ -20,16 +20,15 @@ import { instruments } from "../consants";
 interface ITicker {
   open: boolean;
   setOpen: (arg0: boolean) => void;
-
-  setTickers: (arg0: []) => void;
+  setTickers: (arg0: any) => void;
 }
 
 function Ticker({ open, setOpen, setTickers }: ITicker) {
   const [instrument, setInstrument] = useState("");
   const [amount, setAmount] = useState("");
-  const [price, setPrice] = useState();
-  const [defaultPrice, setDefaultPrice] = useState();
-  const ws = useRef(null);
+  const [price, setPrice] = useState<string[]>([]);
+  const [defaultPrice, setDefaultPrice] = useState<string[]>([]);
+  const ws: any = useRef(null);
 
   const handleClose = () => {
     setOpen(false);
@@ -67,34 +66,102 @@ function Ticker({ open, setOpen, setTickers }: ITicker) {
   };
 
   useEffect(() => {
-    window.WebSocket = MockWebSocket;
-    ws.current = new WebSocket("ws://localhost:5173/");
-    ws.current.addEventListener("open", () => {
-      console.log(`Websocket open`);
-    });
+    // window.WebSocket = MockWebSocket;
+    ws.current = new MockWebSocket("ws://localhost:5173/");
     ws.current.simulateOpen();
-    // ws.current.addEventListener("message", (event) => {
-    //   console.log(`WebSocket message received`);
-    //   let message = JSON.parse(event.data);
-    //   message.id = tickers.length + 1;
-    //   // setTickers([message]);
-    //   console.log(tickers);
-    // });
-    ws.current.addEventListener("message", (event) => {
+    ws.current.addEventListener("message", (event: any) => {
       console.log(`WebSocket message received`);
       let message = JSON.parse(event.data);
-      setTickers((prev) => [...prev, { ...message, id: prev.length + 1 }]);
+      switch (message.type) {
+        case "create":
+          if (
+            message.side &&
+            message.amount &&
+            message.price &&
+            message.instrument
+          ) {
+            setTickers((prev: any) => [
+              ...prev,
+              {
+                ...message,
+                id: prev.length + 1,
+                status: "Active",
+                amount: message.amount + ".00",
+              },
+            ]);
+          } else {
+            ws.current.simulateError("error");
+            setTickers((prev: any) => [
+              ...prev,
+              {
+                ...message,
+                id: prev.length + 1,
+                status: "Rejected",
+                amount: message.amount + ".00",
+              },
+            ]);
+          }
+          break;
+        case "fill":
+          if (
+            message.side &&
+            message.amount &&
+            message.price &&
+            message.instrument
+          ) {
+            setTickers((prev: any) => [
+              ...prev,
+              {
+                ...message,
+                id: prev.length + 1,
+                status: "Filled",
+                amount: message.amount + ".00",
+              },
+            ]);
+          } else {
+            ws.current.simulateError("error");
+            setTickers((prev: any) => [
+              ...prev,
+              {
+                ...message,
+                id: prev.length + 1,
+                status: "Rejected",
+                amount: message.amount + ".00",
+              },
+            ]);
+          }
+          break;
+        case "cancel":
+          if (
+            message.side &&
+            message.amount &&
+            message.price &&
+            message.instrument
+          ) {
+            setTickers((prev: any) => [
+              ...prev,
+              {
+                ...message,
+                id: prev.length + 1,
+                status: "Cancelled",
+                amount: message.amount + ".00",
+              },
+            ]);
+          } else {
+            ws.current.simulateError("error");
+            setTickers((prev: any) => [
+              ...prev,
+              {
+                ...message,
+                id: prev.length + 1,
+                status: "Rejected",
+                amount: message.amount + ".00",
+              },
+            ]);
+          }
+          break;
+      }
     });
-
-    // ws.current.addEventListener("error", (error) => {
-    //   console.error("WebSocket error:", error);
-    // });
-
-    // ws.current.addEventListener("close", (event) => {
-    //   console.log(
-    //     `WebSocket closed with code ${event.code} and reason "${event.reason}"`
-    //   );
-    // });
   }, []);
 
   const sendTicker = async (side: "string") => {
@@ -103,15 +170,31 @@ function Ticker({ open, setOpen, setTickers }: ITicker) {
       changeTime: new Date(),
       side: side,
       price: currentPrice(side),
-      amount: amount + ".00",
+      amount: amount,
       instrument: instrument,
+      type: "create",
     };
-
-    // ws.current.connection.send(JSON.stringify(message));
-    // ws.current.connection.onmessage(JSON.stringify(message));
-    // ws.current.placeOrder(instrument, side, amount, "64.4");
-
+    const message2 = {
+      creationTime: new Date(),
+      changeTime: new Date(),
+      side: side,
+      price: currentPrice(side),
+      amount: amount,
+      instrument: instrument,
+      type: "fill",
+    };
+    const message3 = {
+      creationTime: new Date(),
+      changeTime: new Date(),
+      side: side,
+      price: currentPrice(side),
+      amount: amount,
+      instrument: instrument,
+      type: "cancel",
+    };
     ws.current.simulateMessage(JSON.stringify(message));
+    ws.current.simulateMessage(JSON.stringify(message2));
+    ws.current.simulateMessage(JSON.stringify(message3));
   };
 
   return (
@@ -179,12 +262,12 @@ function Ticker({ open, setOpen, setTickers }: ITicker) {
         }}
       >
         <Stack sx={{ alignItems: "center", width: "50%", padding: "10px" }}>
-          {!price ? null : priceUpperCase(price[0])}
+          {price.length === 0 ? null : priceUpperCase(price[0])}
           <Button
             variant="contained"
             fullWidth
             color="error"
-            onClick={(e) => {
+            onClick={(e: any) => {
               sendTicker(e.target.textContent);
               handleClose();
             }}
@@ -194,12 +277,12 @@ function Ticker({ open, setOpen, setTickers }: ITicker) {
         </Stack>
         <Divider orientation="vertical" flexItem />
         <Stack sx={{ alignItems: "center", width: "50%", padding: "10px" }}>
-          {!price ? null : priceUpperCase(price[1])}
+          {price.length === 0 ? null : priceUpperCase(price[1])}
           <Button
             variant="contained"
             fullWidth
             color="success"
-            onClick={(e) => {
+            onClick={(e: any) => {
               sendTicker(e.target.textContent);
               handleClose();
             }}

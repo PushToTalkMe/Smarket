@@ -1,11 +1,10 @@
-import React, { useState } from "react";
 import {
   DataGrid,
   GridColDef,
   GridCellParams,
   GridRenderCellParams,
 } from "@mui/x-data-grid";
-import { Box, Typography } from "@mui/material";
+import { Box } from "@mui/material";
 
 interface IWaitingList {
   tickers: never[];
@@ -98,29 +97,6 @@ const columns: GridColDef[] = [
   },
 ];
 
-const rows = [
-  {
-    id: 1,
-    creationTime: "2022-01-01 12:00:01.321431",
-    changeTime: "2022-01-01 12:00:01.321431",
-    status: "Filled",
-    side: "Buy",
-    price: "8.662",
-    amount: "50000",
-    instrument: "RUB/USD",
-  },
-  {
-    id: 2,
-    creationTime: "2022-01-01 12:00:01.321431",
-    changeTime: "2022-01-01 12:00:01.321431",
-    status: "Filled",
-    side: "Sell",
-    price: "8.662",
-    amount: "50000",
-    instrument: "RUB/USD",
-  },
-];
-
 function WaitingList({ tickers }: IWaitingList) {
   return (
     <Box
@@ -139,6 +115,14 @@ function WaitingList({ tickers }: IWaitingList) {
         rows={tickers}
         columns={columns}
         autoHeight
+        initialState={{
+          pagination: {
+            paginationModel: {
+              pageSize: 15,
+            },
+          },
+        }}
+        pageSizeOptions={[15]}
         getCellClassName={(params: GridCellParams<any, any, string>) => {
           if (params.field !== "side") {
             if (params.field !== "price") {
@@ -151,6 +135,7 @@ function WaitingList({ tickers }: IWaitingList) {
         }}
         sx={{
           border: "0px solid black",
+          borderColor: "rgba(0, 0, 0, 1)",
           marginTop: "10px",
           alignItems: "center",
           "& .row": {
@@ -166,15 +151,14 @@ function WaitingList({ tickers }: IWaitingList) {
           "& .columnBorder": {
             borderRight: "1px solid black",
           },
-          "& .MuiDataGrid-main": {
+          "& .MuiDataGrid-overlay": {
             borderTop: "1px solid black",
-            borderBottom: "1px solid black",
-            borderLeft: "1px solid black",
           },
-          "& .MuiDataGrid-footerContainer": {
-            borderBottom: "1px solid black",
-            borderLeft: "1px solid black",
-            borderRight: "1px solid black",
+          "& .columnBorder: last-child": {
+            borderRight: "0px solid black",
+          },
+          "& .MuiDataGrid-main": {
+            border: "1px solid black",
           },
         }}
       />
