@@ -24018,7 +24018,7 @@ function uL({ isLogin: e, setIsLogin: t, setOpenAuth: n, setOpenTicker: r }) {
           E(Gn, {
             variant: 'h6',
             component: 'a',
-            href: '/',
+            href: '/Smarket/',
             sx: {
               mr: 2,
               fontFamily: 'monospace',
