@@ -104,7 +104,7 @@ function Ticker({ openTicker, setOpenTicker, setTickers }: ITicker) {
     }
   };
 
-  const sendTicker = async (side: "string") => {
+  const sendTicker = async (side: string) => {
     const message = {
       creationTime: new Date(),
       changeTime: new Date(),
