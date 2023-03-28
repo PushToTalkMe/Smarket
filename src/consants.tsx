@@ -30,3 +30,17 @@ export const instruments = [
     priceSell: "28.801",
   },
 ];
+
+export const users = [
+  {
+    login: "PushToTalk",
+    password: "123456789",
+    isLogin: false,
+  },
+];
+
+export const anonym = {
+  login: "",
+  password: "",
+  isAuth: false,
+};

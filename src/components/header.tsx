@@ -8,14 +8,27 @@ import {
 } from "@mui/material";
 import AccountBalanceIcon from "@mui/icons-material/AccountBalance";
 import ConfirmationNumberIcon from "@mui/icons-material/ConfirmationNumber";
+import { anonym } from "../consants";
 
 interface IHeader {
-  setOpen: (arg0: boolean) => void;
+  isLogin: boolean;
+  setIsLogin: (arg0: boolean) => void;
+  setOpenAuth: (arg0: boolean) => void;
+  setOpenTicker: (arg0: boolean) => void;
 }
 
-function Header({ setOpen }: IHeader) {
-  const handleOpen = () => {
-    setOpen(true);
+function Header({ isLogin, setIsLogin, setOpenAuth, setOpenTicker }: IHeader) {
+  const handleLogout = () => {
+    setIsLogin(false);
+    localStorage.setItem("user", JSON.stringify(anonym));
+  };
+
+  const handleOpenTicker = () => {
+    setOpenTicker(true);
+  };
+
+  const handleOpenAuth = () => {
+    setOpenAuth(true);
   };
 
   return (
@@ -46,11 +59,20 @@ function Header({ setOpen }: IHeader) {
               color="inherit"
               aria-label="menu"
               sx={{ mr: 1 }}
-              onClick={() => handleOpen()}
+              onClick={() => (isLogin ? handleOpenTicker() : handleOpenAuth())}
             >
               <ConfirmationNumberIcon />
             </IconButton>
           </Box>
+          {!isLogin ? (
+            <Button color="inherit" onClick={handleOpenAuth}>
+              Войти
+            </Button>
+          ) : (
+            <Button color="inherit" onClick={handleLogout}>
+              Выйти
+            </Button>
+          )}
         </Toolbar>
       </AppBar>
     </Box>

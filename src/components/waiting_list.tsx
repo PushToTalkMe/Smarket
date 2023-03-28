@@ -10,7 +10,7 @@ interface IWaitingList {
   tickers: never[];
 }
 
-function RenderDate(props: GridRenderCellParams<any>) {
+const renderDate = (props: GridRenderCellParams<any>) => {
   const { value } = props;
   const newValue = value.split("T");
 
@@ -21,7 +21,18 @@ function RenderDate(props: GridRenderCellParams<any>) {
       {newValue[1]}
     </p>
   );
-}
+};
+
+const getCellClassName = (params: GridCellParams<any, any, string>) => {
+  if (params.field !== "side") {
+    if (params.field !== "price") {
+      if (params.field !== "amount") {
+        return "";
+      }
+    }
+  }
+  return params.row.side.toLowerCase();
+};
 
 const columns: GridColDef[] = [
   {
@@ -36,7 +47,7 @@ const columns: GridColDef[] = [
     field: "creationTime",
     headerName: "Creation time",
     width: 210,
-    renderCell: RenderDate,
+    renderCell: renderDate,
     headerClassName: "columnBorder",
     headerAlign: "center",
     cellClassName: "row columnBorder",
@@ -45,7 +56,7 @@ const columns: GridColDef[] = [
     field: "changeTime",
     headerName: "Change time",
     width: 210,
-    renderCell: RenderDate,
+    renderCell: renderDate,
     headerClassName: "columnBorder",
     headerAlign: "center",
     cellClassName: "row columnBorder",
@@ -123,16 +134,7 @@ function WaitingList({ tickers }: IWaitingList) {
           },
         }}
         pageSizeOptions={[15]}
-        getCellClassName={(params: GridCellParams<any, any, string>) => {
-          if (params.field !== "side") {
-            if (params.field !== "price") {
-              if (params.field !== "amount") {
-                return "";
-              }
-            }
-          }
-          return params.row.side.toLowerCase();
-        }}
+        getCellClassName={(params) => getCellClassName(params)}
         sx={{
           border: "0px solid black",
           borderColor: "rgba(0, 0, 0, 1)",

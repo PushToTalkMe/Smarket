@@ -14,16 +14,17 @@ import {
   Typography,
   Divider,
   Box,
+  SelectChangeEvent,
 } from "@mui/material";
 import { instruments } from "../consants";
 
 interface ITicker {
-  open: boolean;
-  setOpen: (arg0: boolean) => void;
+  openTicker: boolean;
+  setOpenTicker: (arg0: boolean) => void;
   setTickers: (arg0: any) => void;
 }
 
-function Ticker({ open, setOpen, setTickers }: ITicker) {
+function Ticker({ openTicker, setOpenTicker, setTickers }: ITicker) {
   const [instrument, setInstrument] = useState("");
   const [amount, setAmount] = useState("");
   const [price, setPrice] = useState<string[]>([]);
@@ -31,7 +32,45 @@ function Ticker({ open, setOpen, setTickers }: ITicker) {
   const ws: any = useRef(null);
 
   const handleClose = () => {
-    setOpen(false);
+    setOpenTicker(false);
+  };
+
+  const handleInstrument = (e: SelectChangeEvent<string>) => {
+    const currentInstrument = e.target.value;
+    setInstrument(currentInstrument);
+    instruments.map((currentPrice) => {
+      if (currentPrice.name === currentInstrument) {
+        setPrice([currentPrice.priceSell, currentPrice.priceBuy]);
+        setDefaultPrice([currentPrice.priceSell, currentPrice.priceBuy]);
+      } else {
+        return;
+      }
+    });
+  };
+
+  const handleAmount = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const currentAmount = e.target.value;
+    if (!price) {
+      alert("First you need to select the instrument");
+    } else {
+      setAmount(currentAmount);
+      const average =
+        ((+defaultPrice[0] - +defaultPrice[1]) / 1000000) * +currentAmount;
+      if (+currentAmount !== 0) {
+        const priceSell = (+defaultPrice[0] + average).toFixed(3);
+        const priceBuy = (+defaultPrice[1] + average).toFixed(3);
+        setPrice([priceSell, priceBuy]);
+      } else {
+        return;
+      }
+    }
+  };
+
+  const handleButton = (e: any) => {
+    sendTicker(e.target.value);
+    handleClose();
   };
 
   const priceUpperCase = (str: string) => {
@@ -50,7 +89,7 @@ function Ticker({ open, setOpen, setTickers }: ITicker) {
         <Typography variant="h4" sx={{ mb: 1 }}>
           {newSubstrUpper1 + newSubstrUpper2}
         </Typography>
-        <Typography variant="h6">{newStr[1][3]}</Typography>
+        <Typography variant="h6">{newStr[1][2]}</Typography>
       </Box>
     );
   };
@@ -63,6 +102,39 @@ function Ticker({ open, setOpen, setTickers }: ITicker) {
     } else {
       return priceBuy;
     }
+  };
+
+  const sendTicker = async (side: "string") => {
+    const message = {
+      creationTime: new Date(),
+      changeTime: new Date(),
+      side: side,
+      price: currentPrice(side),
+      amount: amount,
+      instrument: instrument,
+      type: "create",
+    };
+    const message2 = {
+      creationTime: new Date(),
+      changeTime: new Date(),
+      side: side,
+      price: currentPrice(side),
+      amount: amount,
+      instrument: instrument,
+      type: "fill",
+    };
+    const message3 = {
+      creationTime: new Date(),
+      changeTime: new Date(),
+      side: side,
+      price: currentPrice(side),
+      amount: amount,
+      instrument: instrument,
+      type: "cancel",
+    };
+    ws.current.simulateMessage(JSON.stringify(message));
+    ws.current.simulateMessage(JSON.stringify(message2));
+    ws.current.simulateMessage(JSON.stringify(message3));
   };
 
   useEffect(() => {
@@ -164,64 +236,16 @@ function Ticker({ open, setOpen, setTickers }: ITicker) {
     });
   }, []);
 
-  const sendTicker = async (side: "string") => {
-    const message = {
-      creationTime: new Date(),
-      changeTime: new Date(),
-      side: side,
-      price: currentPrice(side),
-      amount: amount,
-      instrument: instrument,
-      type: "create",
-    };
-    const message2 = {
-      creationTime: new Date(),
-      changeTime: new Date(),
-      side: side,
-      price: currentPrice(side),
-      amount: amount,
-      instrument: instrument,
-      type: "fill",
-    };
-    const message3 = {
-      creationTime: new Date(),
-      changeTime: new Date(),
-      side: side,
-      price: currentPrice(side),
-      amount: amount,
-      instrument: instrument,
-      type: "cancel",
-    };
-    ws.current.simulateMessage(JSON.stringify(message));
-    ws.current.simulateMessage(JSON.stringify(message2));
-    ws.current.simulateMessage(JSON.stringify(message3));
-  };
-
   return (
-    <Dialog open={open} onClick={() => handleClose()}>
-      <DialogContent
-        onClick={(e) => {
-          e.stopPropagation();
-        }}
-      >
+    <Dialog open={openTicker} onClick={handleClose}>
+      <DialogContent onClick={(e) => e.stopPropagation()}>
         <FormControl fullWidth>
           <InputLabel id="instrument">Instrument</InputLabel>
           <Select
             labelId="instrument"
             label="Amount"
             value={instrument}
-            onChange={(e) => {
-              const currentInstrument = e.target.value;
-              setInstrument(currentInstrument);
-              instruments.map((price) => {
-                if (price.name === currentInstrument) {
-                  setPrice([price.priceSell, price.priceBuy]);
-                  setDefaultPrice([price.priceSell, price.priceBuy]);
-                } else {
-                  return;
-                }
-              });
-            }}
+            onChange={(e) => handleInstrument(e)}
           >
             {instruments.map((instrument, index) => (
               <MenuItem key={index} value={instrument.name}>
@@ -236,41 +260,19 @@ function Ticker({ open, setOpen, setTickers }: ITicker) {
             type="number"
             value={amount}
             variant="outlined"
-            onChange={(e) => {
-              const currentAmount = e.target.value;
-              if (!price) {
-                alert("First you need to select the instrument");
-              } else {
-                setAmount(currentAmount);
-                const average = +currentAmount / 100000000;
-                if (+currentAmount !== 0) {
-                  const priceSell = (+defaultPrice[0] + average).toFixed(3);
-                  const priceBuy = (+defaultPrice[1] + average).toFixed(3);
-                  setPrice([priceSell, priceBuy]);
-                } else {
-                  return;
-                }
-              }
-            }}
+            onChange={(e) => handleAmount(e)}
           ></TextField>
         </FormControl>
       </DialogContent>
-      <Box
-        sx={{ display: "flex" }}
-        onClick={(e) => {
-          e.stopPropagation();
-        }}
-      >
+      <Box sx={{ display: "flex" }} onClick={(e) => e.stopPropagation()}>
         <Stack sx={{ alignItems: "center", width: "50%", padding: "10px" }}>
           {price.length === 0 ? null : priceUpperCase(price[0])}
           <Button
             variant="contained"
             fullWidth
             color="error"
-            onClick={(e: any) => {
-              sendTicker(e.target.textContent);
-              handleClose();
-            }}
+            value="Sell"
+            onClick={(e) => handleButton(e)}
           >
             Sell
           </Button>
@@ -282,10 +284,8 @@ function Ticker({ open, setOpen, setTickers }: ITicker) {
             variant="contained"
             fullWidth
             color="success"
-            onClick={(e: any) => {
-              sendTicker(e.target.textContent);
-              handleClose();
-            }}
+            value="Buy"
+            onClick={(e) => handleButton(e)}
           >
             Buy
           </Button>
